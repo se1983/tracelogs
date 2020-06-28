@@ -1,10 +1,6 @@
-
-
-// https://docs.rs/openssh/0.6.2/openssh/
+use logs::JournalDLog;
 
 mod logs;
-
-use logs::JournalDLog;
 
 fn main() {
     let include_filter = vec!("root");

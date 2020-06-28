@@ -3,10 +3,12 @@ extern crate termion;
 use std::process::{Command, Stdio};
 use std::str::FromStr;
 
-use chrono::{NaiveDateTime};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Deserializer};
 use serde::export::fmt::Display;
 use termion::{color, style};
+
+// https://docs.rs/openssh/0.6.2/openssh/
 
 fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
     where T: FromStr,
