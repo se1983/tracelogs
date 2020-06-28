@@ -1,4 +1,5 @@
-use logs::JournalDLog;
+use logs::{JournalDLog, Tracer};
+
 
 mod logs;
 
