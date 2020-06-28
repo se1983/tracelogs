@@ -7,17 +7,17 @@ use chrono::{NaiveDateTime};
 use serde::{de, Deserialize, Deserializer};
 use serde::export::fmt::Display;
 use termion::{color, style};
-use serde::de::Error;
-use std::ops::Deref;
 
 // https://docs.rs/openssh/0.6.2/openssh/
 
-
+#[allow(unused_imports)]
 fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
     where T: FromStr,
           T::Err: Display,
           D: Deserializer<'de>
 {
+    use serde::de::Error;
+
     let s = String::deserialize(deserializer)?;
     T::from_str(&s.replace("\"", "")).map_err(de::Error::custom)
 }
@@ -110,7 +110,7 @@ fn main() {
     let include_filter = vec!("cron", "root");
     let exclude_filter = vec!("session");
 
-    let mut logs = JournalDLog::new("NetworkManager.service")
+    let  logs = JournalDLog::new("NetworkManager.service")
         .merge(JournalDLog::new("cron.service"))
         .merge(JournalDLog::new("polkit.service"));
 
