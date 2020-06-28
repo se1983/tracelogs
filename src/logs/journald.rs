@@ -8,6 +8,8 @@ use serde::{Deserialize, Deserializer};
 use serde::export::fmt::Display;
 use termion::{color, style};
 
+use crate::logs::lib::Tracer;
+
 // https://docs.rs/openssh/0.6.2/openssh/
 
 fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
@@ -31,14 +33,14 @@ pub struct JournalLogLine {
     pub(crate) MESSAGE: String,
 }
 
-impl JournalLogLine {
-    pub fn date(&self) -> NaiveDateTime {
+impl Tracer for JournalLogLine {
+    fn date(&self) -> NaiveDateTime {
         let secs = (&self._SOURCE_REALTIME_TIMESTAMP / 1000000) as i64;
         let nsecs = (&self._SOURCE_REALTIME_TIMESTAMP % 1000000000) as u32;
         NaiveDateTime::from_timestamp(secs, nsecs)
     }
 
-    pub fn header(&self) -> String {
+    fn header(&self) -> String {
         format!("{color}{unit}@{host} -- [{datetime}]{style_reset}",
                 color = color::Fg(color::Yellow),
                 style_reset = style::Reset,
@@ -84,7 +86,7 @@ impl JournalDLog {
         self.lines.extend(other.lines);
         self.lines.sort();
 
-        JournalDLog {
+        Self {
             lines: self.lines.clone(),
             line_idx: self.line_idx,
         }
