@@ -32,7 +32,7 @@ impl Tracer for JournalLogLine {
     }
 
     fn hostname(&self) -> String {
-        self._SYSTEMD_UNIT.clone().unwrap_or(String::from(""))
+        self._HOSTNAME.clone()
     }
 }
 
