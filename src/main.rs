@@ -7,6 +7,7 @@ use chrono::{NaiveDateTime};
 use serde::{de, Deserialize, Deserializer};
 use serde::export::fmt::Display;
 use termion::{color, style};
+use serde::de::Error;
 
 // https://docs.rs/openssh/0.6.2/openssh/
 
@@ -79,7 +80,7 @@ impl JournalDLog {
 
     pub fn merge(&mut self, other: Self){
         self.lines.extend(other.lines);
-        self.lines.sort();
+        self.lines.sort_by_key(|x| x.date());
     }
 }
 
@@ -99,6 +100,7 @@ impl Iterator for JournalDLog {
 fn main() {
     let mut logs = JournalDLog::new("NetworkManager.service");
     logs.merge(JournalDLog::new("cron.service"));
+    logs.merge(JournalDLog::new("polkit.service"));
 
     for line in logs{
         println!("{header}\n\t{msg}\n\n",
