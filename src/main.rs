@@ -8,6 +8,7 @@ use serde::{de, Deserialize, Deserializer};
 use serde::export::fmt::Display;
 use termion::{color, style};
 use serde::de::Error;
+use std::ops::Deref;
 
 // https://docs.rs/openssh/0.6.2/openssh/
 
@@ -34,7 +35,7 @@ struct JournalLogLine {
 impl JournalLogLine {
     pub fn date(&self) -> NaiveDateTime {
         let secs = (&self._SOURCE_REALTIME_TIMESTAMP / 1000000) as i64;
-        let nsecs = (self._SOURCE_REALTIME_TIMESTAMP % 1000000) as u32;
+        let nsecs = (&self._SOURCE_REALTIME_TIMESTAMP % 1000000) as u32;
         NaiveDateTime::from_timestamp(secs, nsecs)
     }
 
@@ -68,8 +69,10 @@ struct JournalDLog {
 impl JournalDLog {
     pub fn new(unit: &str) -> Self {
         let unit_string = format!("--unit={}", unit);
-
-        let pout = read_proc("journalctl", &[unit_string.as_str(), "--output=json", "--no-pager"]);
+        let pout = read_proc(
+            "journalctl",
+            &[unit_string.as_str(), "--output=json", "--no-pager"]
+        );
         let output = serde_json::Deserializer::from_str(&pout).into_iter::<JournalLogLine>();
 
         JournalDLog {
@@ -78,9 +81,14 @@ impl JournalDLog {
         }
     }
 
-    pub fn merge(&mut self, other: Self){
+    pub fn merge(&mut self, other: Self) -> Self{
         self.lines.extend(other.lines);
         self.lines.sort_by_key(|x| x.date());
+
+        JournalDLog{
+            lines: self.lines.clone(),
+            line_idx: self.line_idx
+        }
     }
 }
 
@@ -98,9 +106,10 @@ impl Iterator for JournalDLog {
 }
 
 fn main() {
-    let mut logs = JournalDLog::new("NetworkManager.service");
-    logs.merge(JournalDLog::new("cron.service"));
-    logs.merge(JournalDLog::new("polkit.service"));
+    let mut logs = JournalDLog::new("NetworkManager.service")
+        .merge(JournalDLog::new("NetworkManager.service"))
+        .merge(JournalDLog::new("polkit.service"));
+
 
     for line in logs{
         println!("{header}\n\t{msg}\n\n",
