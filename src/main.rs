@@ -21,7 +21,7 @@ fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 struct JournalLogLine {
     #[serde(deserialize_with = "from_str")]
     _SOURCE_REALTIME_TIMESTAMP: i64,
@@ -60,7 +60,7 @@ fn read_proc(process: &str, args: &[&str]) -> String {
 
 
 struct JournalDLog {
-    lines: Vec<JournalLogLine>,
+    lines:  Vec<JournalLogLine>,
     line_idx: usize,
 }
 
@@ -76,6 +76,11 @@ impl JournalDLog {
             line_idx: 0,
         }
     }
+
+    pub fn merge(&mut self, other: Self){
+        self.lines.extend(other.lines);
+        self.lines.sort();
+    }
 }
 
 impl Iterator for JournalDLog {
@@ -84,6 +89,7 @@ impl Iterator for JournalDLog {
         if self.line_idx >= self.lines.len() {
             return None;
         }
+
         let line = self.lines[self.line_idx].clone();
         self.line_idx += 1;
         Some(line)
@@ -91,7 +97,10 @@ impl Iterator for JournalDLog {
 }
 
 fn main() {
-    for line in JournalDLog::new("sddm.service") {
+    let mut logs = JournalDLog::new("NetworkManager.service");
+    logs.merge(JournalDLog::new("cron.service"));
+
+    for line in logs{
         println!("{header}\n\t{msg}\n\n",
                  header = line.header(),
                  msg = line.MESSAGE);
