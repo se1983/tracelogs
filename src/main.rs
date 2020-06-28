@@ -34,7 +34,7 @@ struct JournalLogLine {
 impl JournalLogLine {
     pub fn date(&self) -> NaiveDateTime {
         let secs = (&self._SOURCE_REALTIME_TIMESTAMP / 1000000) as i64;
-        let nsecs = (&self._SOURCE_REALTIME_TIMESTAMP % 1000000) as u32;
+        let nsecs = (&self._SOURCE_REALTIME_TIMESTAMP % 1000000000) as u32;
         NaiveDateTime::from_timestamp(secs, nsecs)
     }
 
@@ -61,7 +61,7 @@ fn read_proc(process: &str, args: &[&str]) -> String {
 
 
 struct JournalDLog {
-    lines:  Vec<JournalLogLine>,
+    lines: Vec<JournalLogLine>,
     line_idx: usize,
 }
 
@@ -70,7 +70,7 @@ impl JournalDLog {
         let unit_string = format!("--unit={}", unit);
         let pout = read_proc(
             "journalctl",
-            &[unit_string.as_str(), "--output=json", "--no-pager"]
+            &[unit_string.as_str(), "--output=json", "--no-pager"],
         );
         let output = serde_json::Deserializer::from_str(&pout).into_iter::<JournalLogLine>();
 
@@ -80,13 +80,13 @@ impl JournalDLog {
         }
     }
 
-    pub fn merge(&mut self, other: Self) -> Self{
+    pub fn merge(&mut self, other: Self) -> Self {
         self.lines.extend(other.lines);
-        self.lines.sort_by_key(|x| x.date());
+        self.lines.sort();
 
-        JournalDLog{
+        JournalDLog {
             lines: self.lines.clone(),
-            line_idx: self.line_idx
+            line_idx: self.line_idx,
         }
     }
 }
@@ -105,18 +105,17 @@ impl Iterator for JournalDLog {
 }
 
 fn main() {
-
-    let include_filter = vec!("cron", "root");
+    let include_filter = vec!("root");
     let exclude_filter = vec!("session");
 
-    let  logs = JournalDLog::new("NetworkManager.service")
+    let logs = JournalDLog::new("NetworkManager.service")
         .merge(JournalDLog::new("cron.service"))
         .merge(JournalDLog::new("polkit.service"));
 
 
     for line in logs
         .filter(|x| include_filter.iter().all(|y| x.MESSAGE.contains(y)))
-        .filter(|x| !exclude_filter.iter().any(|y| x.MESSAGE.contains(y))){
+        .filter(|x| !exclude_filter.iter().any(|y| x.MESSAGE.contains(y))) {
         println!("{header}\n\t{msg}\n\n",
                  header = line.header(),
                  msg = line.MESSAGE
