@@ -4,13 +4,12 @@ use std::process::{Command, Stdio};
 use std::str::FromStr;
 
 use chrono::{NaiveDateTime};
-use serde::{de, Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer};
 use serde::export::fmt::Display;
 use termion::{color, style};
 
 // https://docs.rs/openssh/0.6.2/openssh/
 
-#[allow(unused_imports)]
 fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
     where T: FromStr,
           T::Err: Display,
@@ -19,7 +18,7 @@ fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
     use serde::de::Error;
 
     let s = String::deserialize(deserializer)?;
-    T::from_str(&s.replace("\"", "")).map_err(de::Error::custom)
+    T::from_str(&s.replace("\"", "")).map_err(Error::custom)
 }
 
 #[allow(non_snake_case)]
@@ -120,6 +119,7 @@ fn main() {
         .filter(|x| !exclude_filter.iter().any(|y| x.MESSAGE.contains(y))){
         println!("{header}\n\t{msg}\n\n",
                  header = line.header(),
-                 msg = line.MESSAGE);
+                 msg = line.MESSAGE
+        );
     }
 }
