@@ -1,4 +1,4 @@
-# tracelog
+# tracelogs
 
 Merge and filter log time series from multiple sources
 
