@@ -6,7 +6,6 @@ use std::str::FromStr;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Deserializer};
 use serde::export::fmt::Display;
-use termion::{color, style};
 
 use crate::logs::lib::Tracer;
 
@@ -40,14 +39,12 @@ impl Tracer for JournalLogLine {
         NaiveDateTime::from_timestamp(secs, nsecs)
     }
 
-    fn header(&self) -> String {
-        format!("{color}{unit}@{host} -- [{datetime}]{style_reset}",
-                color = color::Fg(color::Yellow),
-                style_reset = style::Reset,
-                unit = &self._SYSTEMD_UNIT.clone().unwrap_or(String::from("")),
-                host = &self._HOSTNAME,
-                datetime = self.date()
-        )
+    fn service(&self) -> String {
+        self._SYSTEMD_UNIT.clone().unwrap_or(String::from(""))
+    }
+
+    fn hostname(&self) -> String {
+        self._SYSTEMD_UNIT.clone().unwrap_or(String::from(""))
     }
 }
 
