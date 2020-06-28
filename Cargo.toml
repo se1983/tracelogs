@@ -1,5 +1,5 @@
 [package]
-name = "log_reader"
+name = "tracelogs"
 version = "0.1.0"
 authors = ["sebsch"]
 edition = "2018"
