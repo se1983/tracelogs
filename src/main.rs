@@ -1,6 +1,5 @@
 use logs::{JournalDLog, Tracer};
 
-
 mod logs;
 
 fn main() {
