@@ -10,29 +10,31 @@ use super::lib::from_str;
 // https://docs.rs/openssh/0.6.2/openssh/
 
 
-#[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct JournalLogLine {
-    #[serde(deserialize_with = "from_str")]
-    _SOURCE_REALTIME_TIMESTAMP: i64,
-    _HOSTNAME: String,
-    _SYSTEMD_UNIT: Option<String>,
-    pub(crate) MESSAGE: String,
+    #[serde(deserialize_with = "from_str", alias = "_SOURCE_REALTIME_TIMESTAMP")]
+    timestamp: i64,
+    #[serde(alias = "_HOSTNAME")]
+    hostname: String,
+    #[serde(alias = "_SYSTEMD_UNIT")]
+    service: Option<String>,
+    #[serde(alias = "MESSAGE")]
+    pub(crate) message: String,
 }
 
 impl Tracer for JournalLogLine {
     fn date(&self) -> NaiveDateTime {
-        let secs = (&self._SOURCE_REALTIME_TIMESTAMP / 1000000) as i64;
-        let nsecs = (&self._SOURCE_REALTIME_TIMESTAMP % 1000000000) as u32;
+        let secs = (&self.timestamp / 1000000) as i64;
+        let nsecs = (&self.timestamp % 1000000000) as u32;
         NaiveDateTime::from_timestamp(secs, nsecs)
     }
 
     fn service(&self) -> String {
-        self._SYSTEMD_UNIT.clone().unwrap_or(String::from(""))
+        self.service.clone().unwrap_or(String::from(""))
     }
 
     fn hostname(&self) -> String {
-        self._HOSTNAME.clone()
+        self.hostname.clone()
     }
 }
 

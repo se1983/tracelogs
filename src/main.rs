@@ -10,13 +10,12 @@ fn main() {
         .merge(JournalDLog::new("cron.service"))
         .merge(JournalDLog::new("polkit.service"));
 
-
     for line in logs
-        .filter(|x| include_filter.iter().all(|y| x.MESSAGE.contains(y)))
-        .filter(|x| !exclude_filter.iter().any(|y| x.MESSAGE.contains(y))) {
+        .filter(|x| include_filter.iter().all(|y| x.message.contains(y)))
+        .filter(|x| !exclude_filter.iter().any(|y| x.message.contains(y))) {
         println!("{header}\n\t{msg}\n\n",
                  header = line.header(),
-                 msg = line.MESSAGE
+                 msg = line.message
         );
     }
 }
