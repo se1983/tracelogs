@@ -1,18 +1,13 @@
+use std::error::Error;
+use std::path::Path;
 use std::process::{Command, Stdio};
 
 use chrono::NaiveDateTime;
-use serde::Deserialize;
 use openssh::{KnownHosts, Session};
+use serde::Deserialize;
 
 use crate::logs::Tracer;
-
-use super::lib::from_str;
-use std::path::Path;
-use std::error::Error;
-
-
-// https://docs.rs/openssh/0.6.2/openssh/
-
+use crate::logs::lib::from_str;
 
 #[derive(Deserialize, Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct JournalLogLine {
@@ -57,20 +52,16 @@ async fn read_remote_proc(process: &str, args: &[&str], addr: &str) -> Result<St
     let session = Session::connect(addr, KnownHosts::Strict).await?;
     let ps = session.command(process).args(args).output().await?;
     session.close().await?;
-
-    let output =  String::from_utf8_lossy(&ps.stdout).parse()?;
+    let output = String::from_utf8_lossy(&ps.stdout).parse()?;
 
     Ok(output)
-
 }
-
 
 
 pub struct JournalDLog {
     lines: Vec<JournalLogLine>,
     line_idx: usize,
 }
-
 
 
 impl JournalDLog {
