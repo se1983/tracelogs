@@ -6,9 +6,12 @@ fn main() {
     let include_filter = vec!("root");
     let exclude_filter = vec!("session");
 
-    let logs = JournalDLog::new("NetworkManager.service")
-        .merge(JournalDLog::new("cron.service"))
-        .merge(JournalDLog::new("polkit.service"));
+
+    let host = "ssh://KEPPLER.nextcloud:22";
+
+    let logs = JournalDLog::new("NetworkManager.service", Some(&host))
+        .merge(JournalDLog::new("cron.service", Some(&host)))
+        .merge(JournalDLog::new("polkit.service", Some(&host)));
 
     for line in logs
         .filter(|x| include_filter.iter().all(|y| x.message.contains(y)))

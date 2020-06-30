@@ -2,10 +2,14 @@ use std::process::{Command, Stdio};
 
 use chrono::NaiveDateTime;
 use serde::Deserialize;
+use openssh::{KnownHosts, Session};
 
 use crate::logs::Tracer;
 
 use super::lib::from_str;
+use std::path::Path;
+use std::error::Error;
+
 
 // https://docs.rs/openssh/0.6.2/openssh/
 
@@ -48,21 +52,38 @@ fn read_proc(process: &str, args: &[&str]) -> String {
     String::from_utf8_lossy(&output.stdout).parse().unwrap()
 }
 
+#[tokio::main]
+async fn read_remote_proc(process: &str, args: &[&str], addr: &str) -> Result<String, Box<dyn Error>> {
+    let session = Session::connect(addr, KnownHosts::Strict).await?;
+    let ps = session.command(process).args(args).output().await?;
+    session.close().await?;
+
+    let output =  String::from_utf8_lossy(&ps.stdout).parse()?;
+
+    Ok(output)
+
+}
+
+
 
 pub struct JournalDLog {
     lines: Vec<JournalLogLine>,
     line_idx: usize,
 }
 
-impl JournalDLog {
-    pub fn new(unit: &str) -> Self {
-        let unit_string = format!("--unit={}", unit);
-        let pout = read_proc(
-            "journalctl",
-            &[unit_string.as_str(), "--output=json", "--no-pager"],
-        );
-        let output = serde_json::Deserializer::from_str(&pout).into_iter::<JournalLogLine>();
 
+
+impl JournalDLog {
+    pub fn new(unit: &str, remote: Option<&str>) -> Self {
+        let unit_string = format!("--unit={}", unit);
+        let args = &[unit_string.as_str(), "--output=json", "--no-pager"];
+
+        let pout = match remote {
+            Some(addr) => read_remote_proc("journalctl", args, addr).unwrap(),
+            _ => read_proc("journalctl", args)
+        };
+
+        let output = serde_json::Deserializer::from_str(&pout).into_iter::<JournalLogLine>();
         JournalDLog {
             lines: output.filter_map(Result::ok).collect(),
             line_idx: 0,
