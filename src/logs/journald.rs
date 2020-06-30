@@ -1,7 +1,11 @@
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 
-use crate::logs::lib::{from_str, read_proc, read_remote_proc};
+use crate::logs::lib::{
+    from_str,
+    read_proc,
+    read_remote_proc,
+};
 use crate::logs::Tracer;
 
 #[derive(Deserialize, Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
