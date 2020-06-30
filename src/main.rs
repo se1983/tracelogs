@@ -7,7 +7,7 @@ fn main() {
     let exclude_filter = vec!("session");
 
 
-    let host = "ssh://KEPPLER.nextcloud:22";
+    let host = "ssh://KEPPLER.nextcloud";
 
     let logs = JournalDLog::new("NetworkManager.service", Some(&host))
         .merge(JournalDLog::new("cron.service", Some(&host)))

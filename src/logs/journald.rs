@@ -1,13 +1,8 @@
-use std::error::Error;
-use std::path::Path;
-use std::process::{Command, Stdio};
-
 use chrono::NaiveDateTime;
-use openssh::{KnownHosts, Session};
 use serde::Deserialize;
 
+use crate::logs::lib::{from_str, read_proc, read_remote_proc};
 use crate::logs::Tracer;
-use crate::logs::lib::from_str;
 
 #[derive(Deserialize, Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct JournalLogLine {
@@ -27,42 +22,18 @@ impl Tracer for JournalLogLine {
         let nsecs = (&self.timestamp % 1000000000) as u32;
         NaiveDateTime::from_timestamp(secs, nsecs)
     }
-
     fn service(&self) -> String {
         self.service.clone().unwrap_or(String::from(""))
     }
-
     fn hostname(&self) -> String {
         self.hostname.clone()
     }
 }
 
-fn read_proc(process: &str, args: &[&str]) -> String {
-    let output = Command::new(process)
-        .stdout(Stdio::piped())
-        .args(args)
-        .output().unwrap();
-
-    //println!("{}", String::from_utf8_lossy(&output.stdout));
-    String::from_utf8_lossy(&output.stdout).parse().unwrap()
-}
-
-#[tokio::main]
-async fn read_remote_proc(process: &str, args: &[&str], addr: &str) -> Result<String, Box<dyn Error>> {
-    let session = Session::connect(addr, KnownHosts::Strict).await?;
-    let ps = session.command(process).args(args).output().await?;
-    session.close().await?;
-    let output = String::from_utf8_lossy(&ps.stdout).parse()?;
-
-    Ok(output)
-}
-
-
 pub struct JournalDLog {
     lines: Vec<JournalLogLine>,
     line_idx: usize,
 }
-
 
 impl JournalDLog {
     pub fn new(unit: &str, remote: Option<&str>) -> Self {
@@ -70,9 +41,12 @@ impl JournalDLog {
         let args = &[unit_string.as_str(), "--output=json", "--no-pager"];
 
         let pout = match remote {
-            Some(addr) => read_remote_proc("journalctl", args, addr).unwrap(),
+            Some(addr) => read_remote_proc("journalctl", args, addr),
             _ => read_proc("journalctl", args)
-        };
+        }.unwrap_or_else(|err| {
+            eprintln!("Something went wrong with execution [{:?}]", err);
+            "".to_string()
+        });
 
         let output = serde_json::Deserializer::from_str(&pout).into_iter::<JournalLogLine>();
         JournalDLog {
