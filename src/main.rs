@@ -5,12 +5,11 @@ mod logs;
 fn main() {
     let include_filter = vec!("root");
     let exclude_filter = vec!("session");
-
-
     let host = "ssh://KEPPLER.nextcloud";
 
     let logs = JournalDLog::new("NetworkManager.service", Some(&host))
         .merge(JournalDLog::new("cron.service", Some(&host)))
+        .merge(JournalDLog::new("cron.service", None))
         .merge(JournalDLog::new("polkit.service", Some(&host)));
 
     for line in logs
