@@ -184,7 +184,7 @@ impl RegExtractor {
     }
 
     pub fn get_fields<'t>(&self, logline: &'t str) -> Option<Captures<'t>> {
-        let captures = self.regex.captures(logline);<
+        let captures = self.regex.captures(logline);
         captures
     }
 
