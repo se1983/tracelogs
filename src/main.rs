@@ -1,4 +1,4 @@
-use logs::{Logs, Tracer, JournalDLog};
+use logs::{JournalDLog, Logs, Tracer};
 
 mod logs;
 
@@ -9,8 +9,9 @@ fn main() {
 
 
     let mut logs = Logs::new_from(JournalDLog::new("NetworkManager.service", None));
-    logs.merge(Logs::new_from(JournalDLog::new("Cron.service", Some(&host))));
-
+    logs.merge(
+        Logs::new_from(JournalDLog::new("Cron.service", Some(&host)))
+    );
 
     for line in logs
         .filter(|x| include_filter.iter().all(|y| x.message.contains(y)))

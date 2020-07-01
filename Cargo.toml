@@ -14,4 +14,5 @@ termion = "*"
 ssh2 = "0.8.1"
 tokio = { version = "0.2", features = ["full"] }
 openssh = "0.6.2"
-
+regex = "1"
+strfmt = "0.1.6"

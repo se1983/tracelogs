@@ -3,9 +3,10 @@ use std::process::{Command, Stdio};
 
 use chrono::NaiveDateTime;
 use openssh::{KnownHosts, Session};
-
+use strfmt::strfmt;
 use termion::{color, style};
-
+use regex::{Regex, Captures};
+use std::collections::HashMap;
 
 
 #[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
@@ -122,4 +123,43 @@ pub(super) async fn read_remote_proc(process: &str, args: &[&str], addr: &str) -
     let output = String::from_utf8_lossy(&ps.stdout).parse()?;
 
     Ok(output)
+}
+
+
+#[derive(Debug)]
+struct RegExtractor {
+    datetime: String,
+    host: String,
+    service: String,
+    message: String,
+    line_pattern: String,
+    regex: Regex,
+}
+
+impl RegExtractor {
+    fn new(datetime_schema: &str, host_schema: &str, service_schema: &str, message_schema: &str, line_schema: &str) -> RegExtractor {
+        let mut vars = HashMap::new();
+
+        vars.insert("d".to_string(), datetime_schema);
+        vars.insert("h".to_string(), host_schema);
+        vars.insert("s".to_string(), service_schema);
+        vars.insert("m".to_string(), message_schema);
+
+        let formated_log_pattern = strfmt(line_schema, &vars).unwrap();
+        let re = Regex::new(&formated_log_pattern).unwrap();
+
+        RegExtractor {
+            datetime: String::from(datetime_schema),
+            host: String::from(host_schema),
+            service: String::from(service_schema),
+            message: String::from(message_schema),
+            line_pattern: formated_log_pattern,
+            regex: re,
+        }
+    }
+
+    pub fn get_fields<'t>(&self, logline: &'t str) -> Option<Captures<'t>> {
+        let captures = self.regex.captures(logline);
+        captures
+    }
 }
