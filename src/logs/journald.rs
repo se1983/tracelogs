@@ -46,7 +46,6 @@ impl Tracer for JournalLogLine {
     fn hostname(&self) -> String {
         self.hostname.clone()
     }
-
     fn message(&self) -> String {
         self.message.clone()
     }

@@ -63,6 +63,15 @@ impl Logs {
         lines.sort();
         Self::new(lines)
     }
+
+    pub fn filter_logs(&self, exclude: &[&str], include: &[&str]) -> Logs {
+        let lines: Vec<LogLine> = self.lines.iter().cloned()
+            .filter(|x| x.includes(include))
+            .filter(|x| !x.excludes(exclude))
+            .collect();
+
+        Logs{ lines, line_idx: 0 }
+    }
 }
 
 impl Iterator for Logs {
@@ -93,6 +102,21 @@ pub trait Tracer {
                 host = self.hostname(),
                 datetime = self.date()
         )
+    }
+
+    fn includes(&self, words: &[&str]) -> bool{
+        words.iter().all(|word| self.message().contains(word))
+    }
+
+    fn excludes(&self, words: &[&str]) -> bool{
+        words.iter().any(|word| self.message().contains(word))
+    }
+
+    fn print_line(&self) {
+        println!("{header}\n\t{msg}\n\n",
+                 header = self.header(),
+                 msg = self.message()
+        );
     }
 }
 
@@ -125,7 +149,6 @@ pub(super) async fn read_remote_proc(process: &str, args: &[&str], addr: &str) -
     Ok(output)
 }
 
-
 #[derive(Debug)]
 struct RegExtractor {
     datetime: String,
@@ -136,6 +159,7 @@ struct RegExtractor {
     regex: Regex,
 }
 
+#[allow(dead_code)]
 impl RegExtractor {
     fn new(datetime_schema: &str, host_schema: &str, service_schema: &str, message_schema: &str, line_schema: &str) -> RegExtractor {
         let mut vars = HashMap::new();
