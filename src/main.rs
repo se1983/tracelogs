@@ -1,4 +1,4 @@
-use logs::{JournalDLog, Logs, Tracer};
+use logs::{JournalDLog, Logs, Tracer, LogingSchemes};
 use crate::logs::{RegExtractor, KubectlLog};
 
 mod logs;
@@ -15,7 +15,16 @@ fn main() {
     let log_pattern = "(?P<datetime>({d})) (?P<hostname>({h}))] (?P<service>({s})) (?P<message>({m}))";
     let strftime_pattern = "%Y-%m-%d %H:%M:%S,%f";
 
-    let extractor = RegExtractor::new(datetime, host, service, message, log_pattern, strftime_pattern);
+
+    let scheme = LogingSchemes {
+        date_time: datetime.to_string(),
+        host: host.to_string(),
+        service: service.to_string(),
+        message: message.to_string(),
+        whole_line: log_pattern.to_string()
+    };
+
+    let extractor = RegExtractor::new(scheme, strftime_pattern);
 
 
     let mut logs = Logs::from(KubectlLog::new("testrunner", extractor));

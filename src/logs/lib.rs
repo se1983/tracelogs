@@ -159,24 +159,32 @@ pub struct RegExtractor {
     strftime_pattern: String,
 }
 
+pub(crate) struct LogingSchemes {
+    pub(crate) date_time: String,
+    pub(crate) host: String,
+    pub(crate) service: String,
+    pub(crate) message: String,
+    pub(crate) whole_line: String
+}
+
 #[allow(dead_code)]
 impl RegExtractor {
-    pub(crate) fn new(datetime_schema: &str, host_schema: &str, service_schema: &str, message_schema: &str, line_schema: &str, strftime_pattern: &str) -> RegExtractor {
+    pub(crate) fn new(scheme: LogingSchemes, strftime_pattern: &str) -> RegExtractor {
         let mut vars = HashMap::new();
 
-        vars.insert("d".to_string(), datetime_schema);
-        vars.insert("h".to_string(), host_schema);
-        vars.insert("s".to_string(), service_schema);
-        vars.insert("m".to_string(), message_schema);
+        vars.insert("d".to_string(), &scheme.date_time);
+        vars.insert("h".to_string(), &scheme.host);
+        vars.insert("s".to_string(), &scheme.service);
+        vars.insert("m".to_string(), &scheme.message);
 
-        let formated_log_pattern = strfmt(line_schema, &vars).unwrap();
+        let formated_log_pattern = strfmt(&scheme.whole_line, &vars).unwrap();
         let re = Regex::new(&formated_log_pattern).unwrap();
 
         RegExtractor {
-            datetime: String::from(datetime_schema),
-            host: String::from(host_schema),
-            service: String::from(service_schema),
-            message: String::from(message_schema),
+            datetime:scheme.date_time.clone(),
+            host: scheme.host.clone(),
+            service: scheme.service.clone(),
+            message: scheme.message.clone(),
             line_pattern: formated_log_pattern,
             regex: re,
             strftime_pattern: String::from(strftime_pattern),
