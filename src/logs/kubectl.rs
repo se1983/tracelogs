@@ -42,7 +42,7 @@ impl KubectlLog {
             .map(|x| x.unwrap())
             .map(|x| KubectlLogLine {
                 timestamp: extractor.timestamp_micros(&x["datetime"]),
-                hostname: x["hostname"].to_string(),
+                hostname: pod.to_string(),
                 service: Some(x["service"].to_string()),
                 message: x["message"].to_string(),
             }).collect();

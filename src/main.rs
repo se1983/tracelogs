@@ -8,7 +8,6 @@ fn main() {
     let exclude_filter = vec!();
     let ssh_host = "ssh://KEPPLER.nextcloud";
 
-
     let datetime = r"[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1]) (2[0-3]|[01][0-9]):[0-5][0-9]:[0-5][0-9],[0-9][0-9][0-9]";
     let host = r"([^\s]+)";
     let service = r"([^\s]+)";
