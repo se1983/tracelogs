@@ -25,9 +25,10 @@ fn main() {
     };
 
     let extractor = RegExtractor::new(scheme, strftime_pattern);
+    let pod = "testrunner";
 
 
-    let mut logs = Logs::from(KubectlLog::new("testrunner", extractor));
+    let mut logs = Logs::from(KubectlLog::new(pod, extractor));
     logs = logs.merge(Logs::from(JournalDLog::new("cron.service", Some(&ssh_host))));
 
 
