@@ -1,12 +1,15 @@
 use chrono::NaiveDateTime;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 use crate::logs::lib::{
-    from_str,
     read_proc,
     read_remote_proc,
+    LogSource,
+    LogLine,
 };
 use crate::logs::Tracer;
+use std::str::FromStr;
+use serde::export::fmt::Display;
 
 #[derive(Deserialize, Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct JournalLogLine {
@@ -18,6 +21,17 @@ pub struct JournalLogLine {
     service: Option<String>,
     #[serde(alias = "MESSAGE")]
     pub(crate) message: String,
+}
+
+pub(super) fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+    where T: FromStr,
+          T::Err: Display,
+          D: Deserializer<'de>
+{
+    use serde::de::Error;
+
+    let s = String::deserialize(deserializer)?;
+    T::from_str(&s.replace("\"", "")).map_err(Error::custom)
 }
 
 impl Tracer for JournalLogLine {
@@ -32,11 +46,14 @@ impl Tracer for JournalLogLine {
     fn hostname(&self) -> String {
         self.hostname.clone()
     }
+
+    fn message(&self) -> String {
+        self.message.clone()
+    }
 }
 
 pub struct JournalDLog {
     lines: Vec<JournalLogLine>,
-    line_idx: usize,
 }
 
 impl JournalDLog {
@@ -47,38 +64,19 @@ impl JournalDLog {
         let pout = match remote {
             Some(addr) => read_remote_proc("journalctl", args, addr),
             _ => read_proc("journalctl", args)
-        }.unwrap_or_else(|err| {
-            eprintln!("Something went wrong with execution [{:?}]", err);
-            "".to_string()
-        });
+        }.unwrap();
 
         let output = serde_json::Deserializer::from_str(&pout).into_iter::<JournalLogLine>();
         JournalDLog {
             lines: output.filter_map(Result::ok).collect(),
-            line_idx: 0,
-        }
-    }
-
-    pub fn merge(&mut self, other: Self) -> Self {
-        self.lines.extend(other.lines);
-        self.lines.sort();
-
-        Self {
-            lines: self.lines.clone(),
-            line_idx: self.line_idx,
         }
     }
 }
 
-impl Iterator for JournalDLog {
-    type Item = JournalLogLine;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.line_idx >= self.lines.len() {
-            return None;
-        }
-
-        let line = self.lines[self.line_idx].clone();
-        self.line_idx += 1;
-        Some(line)
+impl LogSource for JournalDLog{
+    fn lines(&self) -> Vec<LogLine> {
+        self.lines.iter().map(|l|
+            LogLine::new(l.timestamp, l.hostname(), l.service(), l.message())
+        ).collect()
     }
 }

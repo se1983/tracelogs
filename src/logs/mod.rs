@@ -1,7 +1,7 @@
-mod lib;
-mod journald;
-mod kubectl;
-
+pub use journald::JournalDLog;
+pub(crate) use lib::Logs;
 pub use lib::Tracer;
 
-pub use journald::JournalDLog;
+mod lib;
+mod journald;
+

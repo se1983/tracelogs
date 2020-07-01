@@ -1,17 +1,89 @@
-use chrono::NaiveDateTime;
-use termion::{color, style};
-use std::str::FromStr;
-use serde::export::fmt::Display;
-use serde::{Deserializer, Deserialize};
 use std::error::Error;
 use std::process::{Command, Stdio};
-use openssh::{Session, KnownHosts};
+
+use chrono::NaiveDateTime;
+use openssh::{KnownHosts, Session};
+
+use termion::{color, style};
+
+
+
+#[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
+pub(crate) struct LogLine {
+    timestamp: i64,
+    hostname: String,
+    service: String,
+    pub(crate) message: String,
+}
+
+impl LogLine {
+    pub fn new(timestamp: i64, hostname: String, service: String, message: String) -> LogLine {
+        LogLine { timestamp, hostname, service, message }
+    }
+}
+
+impl Tracer for LogLine{
+    fn date(&self) -> NaiveDateTime {
+        let secs = (&self.timestamp / 1000000) as i64;
+        let nsecs = (&self.timestamp % 1000000000) as u32;
+        NaiveDateTime::from_timestamp(secs, nsecs)
+    }
+    fn service(&self) -> String {
+        self.service.clone()
+    }
+    fn hostname(&self) -> String {
+        self.hostname.clone()
+    }
+
+    fn message(&self) -> String {
+        self.message.clone()
+    }
+}
+
+pub(crate) struct Logs {
+    lines: Vec<LogLine>,
+    line_idx: usize
+}
+
+impl Logs {
+    pub fn new(lines: Vec<LogLine>) -> Logs {
+        Logs { lines, line_idx: 0 }
+    }
+
+    pub fn new_from<T>(source: T) -> Self where T: LogSource {
+        Logs {
+            lines: source.lines(),
+            line_idx: 0
+        }
+    }
+
+    pub fn merge(&mut self, other: Self) -> Self {
+        let mut lines = [&self.lines[..], &other.lines[..]].concat();
+        lines.sort();
+        Self::new(lines)
+    }
+}
+
+impl Iterator for Logs {
+    type Item = LogLine;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.line_idx {
+            idx if idx < self.lines.len() => {
+                let line = self.lines[self.line_idx].clone();
+                self.line_idx += 1;
+                Some(line)
+            }
+            _ => None,
+        }
+    }
+}
+
 
 pub trait Tracer {
     fn date(&self) -> NaiveDateTime;
     fn service(&self) -> String;
     fn hostname(&self) -> String;
-
+    fn message(&self) -> String;
     fn header(&self) -> String {
         format!("{color}{unit}@{host} -- [{datetime}]{style_reset}",
                 color = color::Fg(color::Yellow),
@@ -23,16 +95,11 @@ pub trait Tracer {
     }
 }
 
-pub(super) fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-    where T: FromStr,
-          T::Err: Display,
-          D: Deserializer<'de>
-{
-    use serde::de::Error;
-
-    let s = String::deserialize(deserializer)?;
-    T::from_str(&s.replace("\"", "")).map_err(Error::custom)
+pub(crate) trait LogSource {
+    fn lines(&self) -> Vec<LogLine>;
 }
+
+
 
 pub(super) fn read_proc(process: &str, args: &[&str]) -> Result<String, Box<dyn Error>> {
     let ps = Command::new(process)

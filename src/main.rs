@@ -1,4 +1,4 @@
-use logs::{JournalDLog, Tracer};
+use logs::{Logs, Tracer, JournalDLog};
 
 mod logs;
 
@@ -7,10 +7,10 @@ fn main() {
     let exclude_filter = vec!("session");
     let host = "ssh://KEPPLER.nextcloud";
 
-    let logs = JournalDLog::new("NetworkManager.service", Some(&host))
-        .merge(JournalDLog::new("cron.service", Some(&host)))
-        .merge(JournalDLog::new("cron.service", None))
-        .merge(JournalDLog::new("polkit.service", Some(&host)));
+
+    let mut logs = Logs::new_from(JournalDLog::new("NetworkManager.service", None));
+    logs.merge(Logs::new_from(JournalDLog::new("Cron.service", Some(&host))));
+
 
     for line in logs
         .filter(|x| include_filter.iter().all(|y| x.message.contains(y)))
