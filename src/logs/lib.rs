@@ -51,7 +51,7 @@ impl Logs {
         Logs { lines, line_idx: 0 }
     }
 
-    pub fn new_from<T>(source: T) -> Self where T: LogSource {
+    pub fn from<T>(source: T) -> Self where T: LogSource {
         Logs {
             lines: source.lines(),
             line_idx: 0

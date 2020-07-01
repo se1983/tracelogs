@@ -19,8 +19,8 @@ fn main() {
     let extractor = RegExtractor::new(datetime, host, service, message, log_pattern, strftime_pattern);
 
 
-    let mut logs = Logs::new_from(KubectlLog::new("testrunner", extractor));
-    logs = logs.merge(Logs::new_from(JournalDLog::new("cron.service", Some(&ssh_host))));
+    let mut logs = Logs::from(KubectlLog::new("testrunner", extractor));
+    logs = logs.merge(Logs::from(JournalDLog::new("cron.service", Some(&ssh_host))));
 
 
     for line in logs.filter_logs(&exclude_filter, &include_filter) {
