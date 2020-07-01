@@ -184,13 +184,14 @@ impl RegExtractor {
     }
 
     pub fn get_fields<'t>(&self, logline: &'t str) -> Option<Captures<'t>> {
-        let captures = self.regex.captures(logline);
+        let captures = self.regex.captures(logline);<
         captures
     }
 
-    pub fn timestamp_millis(&self, strftime: &str) -> i64{
+    pub fn timestamp_micros(&self, strftime: &str) -> i64{
         let date_time = NaiveDateTime::parse_from_str(strftime, &self.strftime_pattern).unwrap();
-        date_time.timestamp() * 1000 + date_time.timestamp_subsec_millis() as i64
+        let timestamp = date_time.timestamp() * 1000000 + date_time.timestamp_subsec_micros() as i64;
+        timestamp
     }
 
 

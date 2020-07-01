@@ -6,7 +6,7 @@ mod logs;
 fn main() {
     let include_filter = vec!();
     let exclude_filter = vec!();
-    let host = "ssh://KEPPLER.nextcloud";
+    let ssh_host = "ssh://KEPPLER.nextcloud";
 
 
     let datetime = r"[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1]) (2[0-3]|[01][0-9]):[0-5][0-9]:[0-5][0-9],[0-9][0-9][0-9]";
@@ -20,6 +20,7 @@ fn main() {
 
 
     let mut logs = Logs::new_from(KubectlLog::new("testrunner", extractor));
+    logs = logs.merge(Logs::new_from(JournalDLog::new("cron.service", Some(&ssh_host))));
 
 
     for line in logs.filter_logs(&exclude_filter, &include_filter) {
