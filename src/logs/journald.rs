@@ -20,7 +20,7 @@ pub struct JournalLogLine {
     #[serde(alias = "_SYSTEMD_UNIT")]
     service: Option<String>,
     #[serde(alias = "MESSAGE")]
-    pub(crate) message: String,
+    message: String,
 }
 
 pub(super) fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>

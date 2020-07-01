@@ -1,7 +1,8 @@
 
 pub use journald::JournalDLog;
-pub(crate) use lib::Logs;
-pub use lib::Tracer;
+pub use kubectl::KubectlLog;
+
+pub(crate) use lib::{Logs, Tracer, RegExtractor};
 
 mod lib;
 mod journald;

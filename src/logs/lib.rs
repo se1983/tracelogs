@@ -125,7 +125,6 @@ pub(crate) trait LogSource {
 }
 
 
-
 pub(super) fn read_proc(process: &str, args: &[&str]) -> Result<String, Box<dyn Error>> {
     let ps = Command::new(process)
         .stdout(Stdio::piped())
@@ -150,18 +149,19 @@ pub(super) async fn read_remote_proc(process: &str, args: &[&str], addr: &str) -
 }
 
 #[derive(Debug)]
-struct RegExtractor {
+pub struct RegExtractor {
     datetime: String,
     host: String,
     service: String,
     message: String,
     line_pattern: String,
     regex: Regex,
+    strftime_pattern: String,
 }
 
 #[allow(dead_code)]
 impl RegExtractor {
-    fn new(datetime_schema: &str, host_schema: &str, service_schema: &str, message_schema: &str, line_schema: &str) -> RegExtractor {
+    pub(crate) fn new(datetime_schema: &str, host_schema: &str, service_schema: &str, message_schema: &str, line_schema: &str, strftime_pattern: &str) -> RegExtractor {
         let mut vars = HashMap::new();
 
         vars.insert("d".to_string(), datetime_schema);
@@ -179,6 +179,7 @@ impl RegExtractor {
             message: String::from(message_schema),
             line_pattern: formated_log_pattern,
             regex: re,
+            strftime_pattern: String::from(strftime_pattern),
         }
     }
 
@@ -186,4 +187,11 @@ impl RegExtractor {
         let captures = self.regex.captures(logline);
         captures
     }
+
+    pub fn timestamp_millis(&self, strftime: &str) -> i64{
+        let date_time = NaiveDateTime::parse_from_str(strftime, &self.strftime_pattern).unwrap();
+        date_time.timestamp() * 1000 + date_time.timestamp_subsec_millis() as i64
+    }
+
+
 }
