@@ -1,7 +1,12 @@
+mod config;
+
 use logs::{JournalDLog, Logs, Tracer, LogingSchemes};
 use crate::logs::{RegExtractor, KubectlLog};
-
+use std::collections::BTreeMap;
 mod logs;
+
+
+use serde_yaml;
 
 fn main() {
     let include_filter = vec!();
@@ -14,6 +19,11 @@ fn main() {
     let message = r"(.*)";
     let log_pattern = "(?P<datetime>({d})) (?P<hostname>({h}))] (?P<service>({s})) (?P<message>({m}))";
     let strftime_pattern = "%Y-%m-%d %H:%M:%S,%f";
+    let pod = "testrunner";
+
+
+    let f = std::fs::File::open("./config/zenbox.yaml").unwrap();
+    let d:config::Configfile = serde_yaml::from_reader(f).unwrap();
 
 
     let scheme = LogingSchemes {
@@ -25,7 +35,6 @@ fn main() {
     };
 
     let extractor = RegExtractor::new(scheme, strftime_pattern);
-    let pod = "testrunner";
 
 
     let mut logs = Logs::from(KubectlLog::new(pod, extractor));
