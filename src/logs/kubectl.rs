@@ -1,7 +1,8 @@
 use chrono::NaiveDateTime;
 
+use crate::config::ConfigFile;
+use crate::logs::{LogScheme, Tracer};
 use crate::logs::lib::{LogLine, LogSource, read_proc, RegExtractor};
-use crate::logs::Tracer;
 
 pub struct KubectlLogLine {
     timestamp: i64,
@@ -46,7 +47,7 @@ impl KubectlLog {
                 service: Some(x["service"].to_string()),
                 message: x["message"].to_string(),
             }).collect();
-        KubectlLog{lines}
+        KubectlLog { lines }
     }
 }
 
@@ -59,6 +60,19 @@ impl LogSource for KubectlLog {
     }
 }
 
+
+pub(crate) fn build_logs(config: &ConfigFile) -> Vec<KubectlLog> {
+    config.targets.kubectl.iter().cloned().map(|t| {
+        let scheme = LogScheme {
+            date_time: t.regex.datetime,
+            host: t.regex.host,
+            service: t.regex.service,
+            message: t.regex.message,
+            whole_line: t.regex.log_pattern,
+        };
+        KubectlLog::new(&t.name, RegExtractor::new(scheme, &t.date_string))
+    }).collect()
+}
 
 
 

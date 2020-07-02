@@ -1,13 +1,12 @@
+use std::collections::HashMap;
 use std::error::Error;
 use std::process::{Command, Stdio};
 
 use chrono::NaiveDateTime;
 use openssh::{KnownHosts, Session};
+use regex::{Captures, Regex};
 use strfmt::strfmt;
 use termion::{color, style};
-use regex::{Regex, Captures};
-use std::collections::HashMap;
-
 
 #[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct LogLine {
@@ -23,7 +22,7 @@ impl LogLine {
     }
 }
 
-impl Tracer for LogLine{
+impl Tracer for LogLine {
     fn date(&self) -> NaiveDateTime {
         let secs = (&self.timestamp / 1000000) as i64;
         let nsecs = (&self.timestamp % 1000000000) as u32;
@@ -43,7 +42,7 @@ impl Tracer for LogLine{
 
 pub(crate) struct Logs {
     lines: Vec<LogLine>,
-    line_idx: usize
+    line_idx: usize,
 }
 
 impl Logs {
@@ -54,7 +53,7 @@ impl Logs {
     pub fn from<T>(source: T) -> Self where T: LogSource {
         Logs {
             lines: source.lines(),
-            line_idx: 0
+            line_idx: 0,
         }
     }
 
@@ -70,7 +69,7 @@ impl Logs {
             .filter(|x| !x.excludes(exclude))
             .collect();
 
-        Logs{ lines, line_idx: 0 }
+        Logs { lines, line_idx: 0 }
     }
 }
 
@@ -104,11 +103,11 @@ pub trait Tracer {
         )
     }
 
-    fn includes(&self, words: &[&str]) -> bool{
+    fn includes(&self, words: &[&str]) -> bool {
         words.iter().all(|word| self.message().contains(word))
     }
 
-    fn excludes(&self, words: &[&str]) -> bool{
+    fn excludes(&self, words: &[&str]) -> bool {
         words.iter().any(|word| self.message().contains(word))
     }
 
@@ -159,17 +158,17 @@ pub struct RegExtractor {
     strftime_pattern: String,
 }
 
-pub(crate) struct LogingSchemes {
+pub(crate) struct LogScheme {
     pub(crate) date_time: String,
     pub(crate) host: String,
     pub(crate) service: String,
     pub(crate) message: String,
-    pub(crate) whole_line: String
+    pub(crate) whole_line: String,
 }
 
 #[allow(dead_code)]
 impl RegExtractor {
-    pub(crate) fn new(scheme: LogingSchemes, strftime_pattern: &str) -> RegExtractor {
+    pub(crate) fn new(scheme: LogScheme, strftime_pattern: &str) -> RegExtractor {
         let mut vars = HashMap::new();
 
         vars.insert("d".to_string(), &scheme.date_time);
@@ -181,7 +180,7 @@ impl RegExtractor {
         let re = Regex::new(&formated_log_pattern).unwrap();
 
         RegExtractor {
-            datetime:scheme.date_time.clone(),
+            datetime: scheme.date_time.clone(),
             host: scheme.host.clone(),
             service: scheme.service.clone(),
             message: scheme.message.clone(),
@@ -196,11 +195,9 @@ impl RegExtractor {
         captures
     }
 
-    pub fn timestamp_micros(&self, strftime: &str) -> i64{
+    pub fn timestamp_micros(&self, strftime: &str) -> i64 {
         let date_time = NaiveDateTime::parse_from_str(strftime, &self.strftime_pattern).unwrap();
         let timestamp = date_time.timestamp() * 1000000 + date_time.timestamp_subsec_micros() as i64;
         timestamp
     }
-
-
 }
