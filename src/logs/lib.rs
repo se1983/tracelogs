@@ -63,7 +63,7 @@ impl Logs {
         Self::new(lines)
     }
 
-    pub fn filter_logs(&self, exclude: &[&str], include: &[&str]) -> Logs {
+    pub fn filter_logs(&self, exclude: &Vec<String>, include: &Vec<String>) -> Logs {
         let lines: Vec<LogLine> = self.lines.iter().cloned()
             .filter(|x| x.includes(include))
             .filter(|x| !x.excludes(exclude))
@@ -103,11 +103,11 @@ pub trait Tracer {
         )
     }
 
-    fn includes(&self, words: &[&str]) -> bool {
+    fn includes(&self, words: &Vec<String>) -> bool {
         words.iter().all(|word| self.message().contains(word))
     }
 
-    fn excludes(&self, words: &[&str]) -> bool {
+    fn excludes(&self, words: &Vec<String>) -> bool {
         words.iter().any(|word| self.message().contains(word))
     }
 

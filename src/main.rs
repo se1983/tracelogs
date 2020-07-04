@@ -1,15 +1,37 @@
 use logs::{journald, kubectl, Logs, Tracer};
+use std::process;
+
+use clap::Clap;
 
 use crate::config::load_config;
+use std::process::exit;
 
 mod config;
-
 mod logs;
 
+
+#[derive(Clap)]
+#[clap(version = "0.1", author = "Sebastian S. <sebsch@geblubber.org>")]
+struct Opts {
+    #[clap(short, long, default_value = "~/.config/tracelogs.yaml")]
+    config_file: String,
+    #[clap(short, long,  multiple = true)]
+    exclude_filter: Option<Vec<String>>,
+    #[clap(short, long, multiple = true)]
+    include_filter: Option<Vec<String>>,
+}
+
+
 fn main() {
-    let include_filter = vec!();
-    let exclude_filter = vec!();
-    let conf = load_config("./config/zenbox.yaml").unwrap();
+
+    let opts: Opts = Opts::parse();
+
+    let include_filter = opts.include_filter.unwrap_or(vec!());
+    let exclude_filter = opts.exclude_filter.unwrap_or(vec!());
+    let conf = load_config(&opts.config_file).unwrap_or_else(|err| {
+        println!("Could not find file [{}]", err);
+            exit(-1);
+    });
 
     let mut logs = Logs::new(vec!());
     for t in kubectl::build_logs(&conf) {
