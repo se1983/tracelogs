@@ -12,7 +12,7 @@ mod logs;
 #[derive(Clap)]
 #[clap(version = "0.1", author = "Sebastian S. <sebsch@geblubber.org>")]
 struct Opts {
-    #[clap(short, long, default_value = "~/.config/tracelogs.yaml")]
+    #[clap(short, long, default_value = "./config/zenbox.yaml")]
     config_file: String,
     #[clap(short, long,  multiple = true)]
     exclude_filter: Option<Vec<String>>,
