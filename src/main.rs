@@ -1,5 +1,4 @@
 use logs::{journald, kubectl, Logs, Tracer};
-use std::process;
 
 use clap::Clap;
 
@@ -29,8 +28,8 @@ fn main() {
     let include_filter = opts.include_filter.unwrap_or(vec!());
     let exclude_filter = opts.exclude_filter.unwrap_or(vec!());
     let conf = load_config(&opts.config_file).unwrap_or_else(|err| {
-        println!("Could not find file [{}]", err);
-            exit(-1);
+        println!("[{}]", err);
+            exit(2);
     });
 
     let mut logs = Logs::new(vec!());
