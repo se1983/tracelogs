@@ -7,6 +7,7 @@ use openssh::{KnownHosts, Session};
 use regex::{Captures, Regex};
 use strfmt::strfmt;
 use termion::{color, style};
+use crate::config::LineDelimiter;
 
 #[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct LogLine {
@@ -155,7 +156,8 @@ pub struct RegExtractor {
     message: String,
     line_pattern: String,
     regex: Regex,
-    strftime_pattern: String,
+    pub(crate) split_pattern: String,
+    pub strftime_pattern: String
 }
 
 pub(crate) struct LogScheme {
@@ -164,6 +166,7 @@ pub(crate) struct LogScheme {
     pub(crate) service: String,
     pub(crate) message: String,
     pub(crate) whole_line: String,
+    pub (crate) split_pattern: String
 }
 
 #[allow(dead_code)]
@@ -186,11 +189,12 @@ impl RegExtractor {
             message: scheme.message.clone(),
             line_pattern: formated_log_pattern,
             regex: re,
+            split_pattern: scheme.split_pattern,
             strftime_pattern: String::from(strftime_pattern),
         }
     }
 
-    pub fn get_fields<'t>(&self, logline: &'t str) -> Option<Captures<'t>> {
+    pub fn get_fields<'t>(&self, logline: &'t String) -> Option<Captures<'t>> {
         let captures = self.regex.captures(logline);
         captures
     }
@@ -200,4 +204,20 @@ impl RegExtractor {
         let timestamp = date_time.timestamp() * 1000000 + date_time.timestamp_subsec_micros() as i64;
         timestamp
     }
+}
+
+pub fn split_keep<'a>(r: &Regex, text: &'a str) -> Vec<&'a str> {
+    let mut result = Vec::new();
+    let mut last = 0;
+    for (index, matched) in text.match_indices(r) {
+        if last != index {
+            result.push(&text[last..index]);
+        }
+        result.push(matched);
+        last = index + matched.len();
+    }
+    if last < text.len() {
+        result.push(&text[last..]);
+    }
+    result
 }

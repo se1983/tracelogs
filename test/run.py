@@ -12,6 +12,6 @@ logging.basicConfig(
 
 fake = Faker()
 while True:
-    logging.info(fake.name())
+    logging.info(f" {fake.name()}\n\t{fake.random}")
     sleep(7)
 

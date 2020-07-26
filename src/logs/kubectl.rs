@@ -2,7 +2,8 @@ use chrono::NaiveDateTime;
 
 use crate::config::ConfigFile;
 use crate::logs::{LogScheme, Tracer};
-use crate::logs::lib::{LogLine, LogSource, read_proc, RegExtractor};
+use crate::logs::lib::{LogLine, LogSource, read_proc, RegExtractor, split_keep};
+use regex::Regex;
 
 pub struct KubectlLogLine {
     timestamp: i64,
@@ -36,9 +37,13 @@ pub struct KubectlLog {
 impl KubectlLog {
     pub fn new(pod: &str, extractor: RegExtractor) -> KubectlLog {
         let args = &["logs", pod];
-        let proc_out = read_proc("kubectl", args).unwrap();
-        let lines: Vec<KubectlLogLine> = proc_out.split("\n")
-            .map(|l| extractor.get_fields(l))
+
+        let seperator = Regex::new(&extractor.split_pattern).expect("Invalid regex");
+        let raw_ouput = read_proc("kubectl", args).unwrap();
+        let splits: Vec<String> = split_keep(&seperator, &raw_ouput).chunks(2).map(|x|format!("{}{}", x[0], x[1])).collect();
+
+        let lines: Vec<KubectlLogLine> = splits.iter()
+            .map(|l| extractor.get_fields(&l))
             .filter(|x| x.is_some())
             .map(|x| x.unwrap())
             .map(|x| KubectlLogLine {
@@ -49,6 +54,7 @@ impl KubectlLog {
             }).collect();
         KubectlLog { lines }
     }
+
 }
 
 
@@ -69,6 +75,7 @@ pub(crate) fn build_logs(config: &ConfigFile) -> Vec<KubectlLog> {
             service: t.regex.service,
             message: t.regex.message,
             whole_line: t.regex.log_pattern,
+            split_pattern: t.regex.line_delimiter.pattern,
         };
         KubectlLog::new(&t.name, RegExtractor::new(scheme, &t.date_string))
     }).collect()

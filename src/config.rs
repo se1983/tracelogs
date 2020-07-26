@@ -3,12 +3,24 @@ use std::error::Error;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct LineDelimiter {
+    pub pattern: String
+}
+impl Default for LineDelimiter {
+    fn default() -> Self {
+        Self {pattern: "([\r\n])".to_string()}
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct RegexScheme {
     pub(crate) datetime: String,
     pub(crate) host: String,
     pub(crate) service: String,
     pub(crate) message: String,
     pub(crate) log_pattern: String,
+    #[serde(default)]
+    pub(crate) line_delimiter: LineDelimiter,
 }
 
 #[derive(Deserialize, Debug, Clone)]
