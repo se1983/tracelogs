@@ -7,7 +7,6 @@ use openssh::{KnownHosts, Session};
 use regex::{Captures, Regex};
 use strfmt::strfmt;
 use termion::{color, style};
-use crate::config::LineDelimiter;
 
 #[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct LogLine {
