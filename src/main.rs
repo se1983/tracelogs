@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_split_text() {
-        let mut ids: Vec<usize> = vec![1, 4, 5];
+        let ids: Vec<usize> = vec![1, 4, 5];
         assert_eq!(split_text(ids, "Mary had a little lamb"),
                    vec!["M", "ary", " ", "had a little lamb"])
     }
@@ -54,6 +54,6 @@ mod tests {
         let rgx = Regex::new(r"(?m)^\[").unwrap();
         let text = "Mary \n[had a \nlittle lamb";
         let idxs = pattern_indices(&rgx, &text);
-        assert_eq!(split_text(idxs, text), vec!["Mary \n", "[had a \nlittle lamb"])
+        assert_eq!(split_text(idxs, &text), vec!["Mary \n", "[had a \nlittle lamb"])
     }
 }
