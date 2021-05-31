@@ -1,57 +1,59 @@
+#![allow(dead_code)]
+
 extern crate tokio;
+
+use regex::Regex;
 
 mod reader;
 
-use reader::local_processes;
-
-use log::LevelFilter;
-use regex::Regex;
-use simple_logger::SimpleLogger;
-
-fn split_keep<'a>(r: &Regex, text: &'a str) -> Vec<&'a str> {
-    let mut result = Vec::new();
-    let mut last = 0;
-    for (index, matched) in text.match_indices(r.as_str()) {
-        if last != index {
-            result.push(&text[last..index]);
-        }
-        result.push(matched);
-        last = index + matched.len();
-    }
-    if last < text.len() {
-        result.push(&text[last..]);
-    }
-    result
+fn pattern_indices(re: &Regex, text: &str) -> Vec<usize> {
+    re.find_iter(text).map(|m| m.start()).collect()
 }
 
-struct NewLineTokenizer {
-    lines: Vec<String>,
-    newline_rgx: Regex,
-}
-
-impl NewLineTokenizer {
-    fn new() -> Self {
-        let lines = vec![];
-        let newline_rgx = Regex::new(r"^\[").unwrap();
-
-        NewLineTokenizer { lines, newline_rgx }
+fn split_text(mut idxs: Vec<usize>, text: &str) -> Vec<&str> {
+    let mut slices = Vec::new();
+    let mut lhs: usize = 0;
+    if idxs.last().unwrap() != &text.len() {
+        idxs.insert(idxs.len(), text.len())
     }
 
-    fn append(&mut self, line: &str) -> Vec<String> {
-        self.lines.push(String::from(line));
-        let full_string: String = self.lines.join("\n");
-        let mut lines = split_keep(&self.newline_rgx, &full_string);
-        if lines.len() >= 2 {
-            self.lines = vec![lines.pop().unwrap().to_string()];
-        }
-
-        lines.iter().map(|x| String::from(*x)).collect()
+    for i in idxs {
+        slices.push(&text[lhs..i]);
+        lhs = i;
     }
+
+    slices
 }
 
 #[tokio::main]
-async fn main() {
-    log::set_max_level(LevelFilter::Info);
-    SimpleLogger::new().init().unwrap();
-    local_processes::watch().await;
+async fn main() {}
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_newline_indexer() {
+        let rgx = Regex::new(r"(?m)^\[").unwrap();
+        assert_eq!(pattern_indices(&rgx, "foo\n[bar"), [4]);
+        assert_eq!(pattern_indices(&rgx, "[foo\nbar"), [0]);
+        assert_eq!(pattern_indices(&rgx, "[foo\n[bar"), [0, 5]);
+        assert_eq!(pattern_indices(&rgx, "foo\nbar"), [])
+    }
+
+    #[test]
+    fn test_split_text() {
+        let mut ids: Vec<usize> = vec![1, 4, 5];
+        assert_eq!(split_text(ids, "Mary had a little lamb"),
+                   vec!["M", "ary", " ", "had a little lamb"])
+    }
+
+    #[test]
+    fn test_combination() {
+        let rgx = Regex::new(r"(?m)^\[").unwrap();
+        let text = "Mary \n[had a \nlittle lamb";
+        let idxs = pattern_indices(&rgx, &text);
+        assert_eq!(split_text(idxs, text), vec!["Mary \n", "[had a \nlittle lamb"])
+    }
 }
