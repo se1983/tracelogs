@@ -7,6 +7,36 @@ use regex::Regex;
 mod reader;
 
 
+struct LogLineTokenizer {
+    separator: Regex,
+    buffer: String
+}
+
+impl LogLineTokenizer{
+    pub fn new(separator: Regex) -> LogLineTokenizer {
+        let buffer = String::from("");
+        LogLineTokenizer{separator, buffer}
+    }
+
+    pub fn append(&mut self, text: &str) {
+        self.buffer.push_str(text);
+        self.tokenize();
+    }
+
+    fn tokenize(&mut self) {
+        let tokenized = split_text(&self.separator, &self.buffer);
+
+        if let Some((last, elements)) = tokenized.split_last(){
+            for log_line in elements {
+                println!("new logline: {}", log_line);
+            }
+            self.buffer = String::from(*last)
+
+        }
+
+    }
+}
+
 fn split_text<'a>(separator: &Regex, text: &'a str) -> Vec<&'a str> {
     let mut slices = Vec::new();
     let mut lhs: usize = 0;
@@ -22,12 +52,22 @@ fn split_text<'a>(separator: &Regex, text: &'a str) -> Vec<&'a str> {
     slices
 }
 
-#[tokio::main]
-async fn main() {}
+fn main() {
+
+    let mut tokenizer = LogLineTokenizer::new(Regex::new(r"(?m)^\[").unwrap());
+
+    tokenizer.append("this will not be tokenized\n");
+    tokenizer.append("also this will [not]");
+    tokenizer.append("do anything\n");
+    tokenizer.append("[this will trigger it!");
+    tokenizer.append("\n[");
+
+
+
+}
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]
