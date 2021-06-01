@@ -12,9 +12,7 @@ fn split_text<'a>(separator: &Regex, text: &'a str) -> Vec<&'a str> {
     let mut lhs: usize = 0;
 
     let mut indices: Vec<usize> = separator.find_iter(text).map(|m| m.start()).collect();
-    if indices.last().unwrap() != &text.len() {
-        indices.insert(indices.len(), text.len())
-    }
+    indices.push(text.len());
 
     for rhs in indices {
         slices.push(&text[lhs..rhs]);
@@ -33,9 +31,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_combination() {
+    fn test_split_text() {
         let separator = Regex::new(r"(?m)^\[").unwrap();
-        let text = "Mary \n[had a \nlittle lamb";
-        assert_eq!(split_text(&separator, &text), vec!["Mary \n", "[had a \nlittle lamb"])
+        let text = "Mary \n[had a \nlittle lamb\n[";
+        assert_eq!(split_text(&separator, &text), vec!["Mary \n", "[had a \nlittle lamb\n", "["])
+    }
+
+    #[test]
+    fn test_split_text_no_match() {
+        let separator = Regex::new(r"(?m)^\[").unwrap();
+        let text = "little lamb";
+        assert_eq!(split_text(&separator, &text), vec!["little lamb"])
     }
 }
