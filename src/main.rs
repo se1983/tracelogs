@@ -31,18 +31,20 @@ impl LogLineTokenizer{
                 println!("new logline: {}", log_line);
             }
             self.buffer = String::from(*last)
-
         }
-
     }
+}
+
+fn find_indices(re: &Regex, text: &str) -> Vec<usize>{
+    let mut indices: Vec<usize> = re.find_iter(text).map(|m| m.start()).collect();
+    indices.push(text.len());
+    indices
 }
 
 fn split_text<'a>(separator: &Regex, text: &'a str) -> Vec<&'a str> {
     let mut slices = Vec::new();
     let mut lhs: usize = 0;
-
-    let mut indices: Vec<usize> = separator.find_iter(text).map(|m| m.start()).collect();
-    indices.push(text.len());
+    let indices = find_indices(&separator, &text);
 
     for rhs in indices {
         slices.push(&text[lhs..rhs]);
