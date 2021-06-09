@@ -15,7 +15,7 @@ impl LogLineTokenizer{
         LogLineTokenizer{separator, buffer, lines}
     }
 
-    pub fn append(&mut self, text: &str) {
+    pub fn push(&mut self, text: &str) {
         self.buffer.push_str(text);
         self.tokenize();
     }
