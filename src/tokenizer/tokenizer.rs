@@ -5,17 +5,20 @@ use crate::tokenizer::LogLineToken;
 pub struct LogLineTokenizer {
     separator: Regex,
     buffer: String,
-    lines: Vec<LogLineToken>
+    pub count: usize,
+    lines: Vec<LogLineToken>,
 }
 
-impl LogLineTokenizer{
+impl LogLineTokenizer {
     pub fn new(separator: Regex) -> LogLineTokenizer {
         let buffer = String::from("");
         let lines: Vec<LogLineToken> = vec![];
-        LogLineTokenizer{separator, buffer, lines}
+        let count = 0;
+        LogLineTokenizer { separator, buffer, lines, count }
     }
 
     pub fn push(&mut self, text: &str) {
+        self.count += 1;
         self.buffer.push_str(text);
         self.tokenize();
     }
@@ -23,13 +26,11 @@ impl LogLineTokenizer{
     fn tokenize(&mut self) {
         let tokenized = split_text(&self.separator, &self.buffer);
 
-        if let Some((last, elements)) = tokenized.split_last(){
+        if let Some((last, elements)) = tokenized.split_last() {
             for log_line in elements {
-
                 let line = LogLineToken::new(&log_line);
                 println!("new logline: {:?}", &line);
                 self.lines.push(line)
-
             }
             self.buffer = String::from(*last)
         }
@@ -45,7 +46,7 @@ impl Drop for LogLineTokenizer {
     }
 }
 
-fn find_indices(re: &Regex, text: &str) -> Vec<usize>{
+fn find_indices(re: &Regex, text: &str) -> Vec<usize> {
     let mut indices: Vec<usize> = re.find_iter(text).map(|m| m.start()).collect();
     indices.push(text.len());
     indices
@@ -80,5 +81,11 @@ mod tests {
         let separator = Regex::new(r"(?m)^\[").unwrap();
         let text = "little lamb";
         assert_eq!(split_text(&separator, &text), vec!["little lamb"])
+    }
+    #[test]
+    fn test_split_text_newline() {
+        let separator = Regex::new(r"(?m)^").unwrap();
+        let text = "little\nlamb";
+        assert_eq!(split_text(&separator, &text), vec!["little\n", "lamb"])
     }
 }
