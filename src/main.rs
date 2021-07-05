@@ -22,7 +22,8 @@ impl LogFileAdapter {
 
             for (i, line) in contents.lines().enumerate() {
                 if i < self.tokenizer.count { continue; }
-                self.tokenizer.push(line);
+                let line = "\n".to_owned() + line;
+                self.tokenizer.push(&line);
             }
         }
     }

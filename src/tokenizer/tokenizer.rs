@@ -58,6 +58,9 @@ fn split_text<'a>(separator: &Regex, text: &'a str) -> Vec<&'a str> {
     let indices = find_indices(&separator, &text);
 
     for rhs in indices {
+        if rhs == lhs {
+            continue;
+        }
         slices.push(&text[lhs..rhs]);
         lhs = rhs;
     }
@@ -82,10 +85,32 @@ mod tests {
         let text = "little lamb";
         assert_eq!(split_text(&separator, &text), vec!["little lamb"])
     }
+
     #[test]
     fn test_split_text_newline() {
         let separator = Regex::new(r"(?m)^").unwrap();
         let text = "little\nlamb";
         assert_eq!(split_text(&separator, &text), vec!["little\n", "lamb"])
+    }
+
+    #[test]
+    fn test_full_text_example() {
+        let separator = Regex::new(r"(?m)^").unwrap();
+        let text = r#"Whether that mattress was stuffed with corn-cobs or
+broken crockery, there is no telling, but I rolled about a
+good deal, and could not sleep for a long time. At last
+I slid off into a light doze, and had pretty nearly made a
+good offing toward the land of Nod, when I heard a
+heavy footfall in the passage, and saw a glimmer of light
+come into the room from under the door."#;
+        assert_eq!(split_text(&separator, &text), vec![
+            "Whether that mattress was stuffed with corn-cobs or\n",
+            "broken crockery, there is no telling, but I rolled about a\n",
+            "good deal, and could not sleep for a long time. At last\n",
+            "I slid off into a light doze, and had pretty nearly made a\n",
+            "good offing toward the land of Nod, when I heard a\n",
+            "heavy footfall in the passage, and saw a glimmer of light\n",
+            "come into the room from under the door."
+        ])
     }
 }

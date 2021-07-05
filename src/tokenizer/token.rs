@@ -1,5 +1,5 @@
 #[derive(Debug, Clone)]
-pub struct LogLineToken {
+pub struct  LogLineToken {
     pub raw_data: String
 }
 
