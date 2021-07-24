@@ -10,7 +10,7 @@ struct LogFileAdapter {
 impl LogFileAdapter {
     // TODO: Add this to seperated module
     // TODO: Create trait 'LogSource' from LogFileAdapter; use trait LogSource in LogFileAdapter
-    // TODO: Implement WebLogSource implementing LogSource (async Webserver waiting for loglines)
+    // TODO: Implement LogTCPAdapter implementing LogSource (async Webserver waiting for loglines)
 
     pub fn new(file_path: String, tokenizer: LogLineTokenizer) -> Self {
         LogFileAdapter {
