@@ -48,6 +48,7 @@ impl LogFileAdapter {
 
 async fn run() {
     // TODO: Allow multiple LogSources
+    // TODO: Add data persistence
 
     let newline_rgx = Regex::new(r"(?m)^\[").unwrap();
     let tokenizer = LogLineTokenizer::new(newline_rgx);
