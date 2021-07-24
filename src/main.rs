@@ -1,7 +1,5 @@
 use regex::Regex;
 use std::time::Duration;
-use tokio::fs;
-use tokio::time::sleep;
 use tracelogs::tokenizer::LogLineTokenizer;
 
 struct LogFileAdapter {
@@ -18,13 +16,13 @@ impl LogFileAdapter {
     }
 
     async fn next(&mut self) -> Result<(), tokio::io::Error> {
-        let file_cont = fs::read_to_string(&self.file_path).await?;
+        let file_cont = tokio::fs::read_to_string(&self.file_path).await?;
 
         for (i, line) in file_cont.lines().enumerate() {
             if i < self.tokenizer.count {
                 continue;
             }
-            let line = "\n".to_owned() + line;
+            let line = format!("{}\n", line);
             self.tokenizer.push(&line);
         }
 
@@ -34,10 +32,10 @@ impl LogFileAdapter {
     pub async fn watch(&mut self) {
         loop {
             match self.next().await {
-                Ok(_) => sleep(Duration::from_millis(300)).await,
+                Ok(_) => tokio::time::sleep(Duration::from_millis(300)).await,
                 Err(err) => {
                     eprintln!("error open file {}  [{}]", self.file_path, err);
-                    sleep(Duration::from_millis(3000)).await;
+                    tokio::time::sleep(Duration::from_millis(3000)).await;
                 }
             }
         }
@@ -45,7 +43,7 @@ impl LogFileAdapter {
 }
 
 async fn run() {
-    let newline_rgx = Regex::new(r"(?m)\n^\[").unwrap();
+    let newline_rgx = Regex::new(r"(?m)^\[").unwrap();
     let tokenizer = LogLineTokenizer::new(newline_rgx);
     let mut reader = LogFileAdapter::new(String::from("/var/log/Xorg.0.log"), tokenizer);
     reader.watch().await;
