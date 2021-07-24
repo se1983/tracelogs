@@ -8,6 +8,10 @@ struct LogFileAdapter {
 }
 
 impl LogFileAdapter {
+    // TODO: Add this to seperated module
+    // TODO: Create trait 'LogSource' from LogFileAdapter; use trait LogSource in LogFileAdapter
+    // TODO: Implement WebLogSource implementing LogSource (async Webserver waiting for loglines)
+
     pub fn new(file_path: String, tokenizer: LogLineTokenizer) -> Self {
         LogFileAdapter {
             file_path,
@@ -43,6 +47,8 @@ impl LogFileAdapter {
 }
 
 async fn run() {
+    // TODO: Allow multiple LogSources
+
     let newline_rgx = Regex::new(r"(?m)^\[").unwrap();
     let tokenizer = LogLineTokenizer::new(newline_rgx);
     let mut reader = LogFileAdapter::new(String::from("/var/log/Xorg.0.log"), tokenizer);
