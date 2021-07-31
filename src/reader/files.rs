@@ -1,15 +1,14 @@
-use crate::tokenizer::LogLineTokenizer;
 use std::time::Duration;
 
-pub struct LogFileAdapter {
+use crate::tokenizer::LogLineTokenizer;
+
+pub struct LogFileAdapter<'a> {
     file_path: String,
-    tokenizer: LogLineTokenizer,
+    tokenizer: LogLineTokenizer<'a>,
 }
 
-impl LogFileAdapter {
-    // TODO: Implement TcpAdapter implementing LogSource (async Webserver waiting for loglines)
-
-    pub fn new(file_path: String, tokenizer: LogLineTokenizer) -> Self {
+impl<'a> LogFileAdapter<'a> {
+    pub fn new(file_path: String, tokenizer: LogLineTokenizer<'a>) -> LogFileAdapter {
         LogFileAdapter {
             file_path,
             tokenizer,
