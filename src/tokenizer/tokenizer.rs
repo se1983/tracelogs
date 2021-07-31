@@ -7,10 +7,11 @@ pub struct LogLineTokenizer<'a> {
     pub count: usize,
     lines: Vec<LogLineToken<'a>>,
     log_source: &'a str,
+    host_name: &'a str,
 }
 
 impl<'a> LogLineTokenizer<'a> {
-    pub fn new(separator: Regex, log_source: &'a str) -> LogLineTokenizer {
+    pub fn new(separator: Regex, log_source: &'a str, host_name: &'a str) -> LogLineTokenizer<'a> {
         let buffer = String::from("");
         let lines: Vec<LogLineToken> = vec![];
         let count = 0;
@@ -20,6 +21,7 @@ impl<'a> LogLineTokenizer<'a> {
             lines,
             count,
             log_source,
+            host_name,
         }
     }
 
@@ -34,18 +36,22 @@ impl<'a> LogLineTokenizer<'a> {
 
         if let Some((last, elements)) = tokenized.split_last() {
             for log_line in elements {
-                let line = LogLineToken::new(&log_line, self.log_source);
+                let line = self.make_token(log_line);
                 println!("new logline: {:?}", &line);
                 self.lines.push(line)
             }
             self.buffer = String::from(*last)
         }
     }
+
+    fn make_token(&self, text: &str) -> LogLineToken<'a> {
+        LogLineToken::new(text, self.log_source, self.host_name)
+    }
 }
 
 impl<'a> Drop for LogLineTokenizer<'a> {
     fn drop(&mut self) {
-        let line = LogLineToken::new(&self.buffer, self.log_source);
+        let line = self.make_token(&self.buffer);
         self.buffer = String::from("");
         println!("new logline: {:?}", &line);
         self.lines.push(line);

@@ -10,7 +10,8 @@ async fn run() {
 
     let newline_rgx = Regex::new(r"(?m)^\[").unwrap();
     let logsource = "/var/log/Xorg.0.log";
-    let tokenizer = LogLineTokenizer::new(newline_rgx, logsource);
+    let host_name = "localhost";
+    let tokenizer = LogLineTokenizer::new(newline_rgx, logsource, host_name);
     let mut file_reader = LogFileAdapter::new(String::from(logsource), tokenizer);
 
     file_reader.watch().await;
