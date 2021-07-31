@@ -4,7 +4,11 @@ use regex::Regex;
 use tracelogs::tokenizer::LogLineTokenizer;
 
 fn main() {
-    let mut tokenizer = LogLineTokenizer::new(Regex::new(r"(?m)^\[").unwrap());
+    let mut tokenizer = LogLineTokenizer::new(
+        Regex::new(r"(?m)^\[").unwrap(),
+        "multiline_example",
+        "localhost",
+    );
     tokenizer.push("this will not be tokenized\n");
     tokenizer.push("also this will [not]");
     tokenizer.push("do anything\n");
