@@ -5,7 +5,7 @@ pub struct LogLineTokenizer<'a> {
     separator: Regex,
     buffer: String,
     pub count: usize,
-    lines: Vec<LogLineToken<'a>>,
+    pub lines: Vec<LogLineToken<'a>>,
     log_source: &'a str,
     host_name: &'a str,
 }
